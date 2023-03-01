@@ -110,7 +110,7 @@ func InitialSettings() []model.SettingItem {
 		"PDF.js":"https://alist-org.github.io/pdf.js/web/viewer.html?file=$e_url"
 	},
 	"epub": {
-		"EPUB.js":"/static/epub.js/viewer.html?url=$e_url"
+		"EPUB.js":"https://alist-org.github.io/static/epub.js/viewer.html?url=$e_url"
 	}
 }`, Type: conf.TypeText, Group: model.PREVIEW},
 		//		{Key: conf.OfficeViewers, Value: `{
@@ -156,7 +156,7 @@ func InitialSettings() []model.SettingItem {
 		{Key: conf.GithubLoginEnabled, Value: "false", Type: conf.TypeBool, Group: model.GITHUB, Flag: model.PUBLIC},
 
 		// qbittorrent settings
-		{Key: conf.QbittorrentUrl, Value: "http://admin:adminadmin@localhost:8080/", Type: conf.TypeString, Group: model.QBITTORRENT, Flag: model.PRIVATE},
+		{Key: conf.QbittorrentUrl, Value: "http://admin:adminadmin@localhost:8080/", Type: conf.TypeString, Group: model.SINGLE, Flag: model.PRIVATE},
 	}
 	if flags.Dev {
 		initialSettingItems = append(initialSettingItems, []model.SettingItem{

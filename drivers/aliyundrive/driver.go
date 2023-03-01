@@ -71,14 +71,14 @@ func (d *AliDrive) Init(ctx context.Context) error {
 	// init privateKey
 	privateKey, _ := NewPrivateKeyFromHex(deviceID)
 	state := State{
-		nonce:      -1,
 		privateKey: privateKey,
 		deviceID:   deviceID,
 	}
 	// store state
 	global.Store(d.UserID, &state)
 	// init signature
-	return d.reSign()
+	d.sign()
+	return nil
 }
 
 func (d *AliDrive) Drop(ctx context.Context) error {
@@ -337,6 +337,7 @@ func (d *AliDrive) Other(ctx context.Context, args model.OtherArgs) (interface{}
 	case "video_preview":
 		url = "https://api.aliyundrive.com/v2/file/get_video_preview_play_info"
 		data["category"] = "live_transcoding"
+		data["url_expire_sec"] = 14400
 	default:
 		return nil, errs.NotSupport
 	}

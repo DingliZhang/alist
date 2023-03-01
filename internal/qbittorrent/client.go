@@ -15,7 +15,7 @@ type Client interface {
 	AddFromLink(link string, savePath string, id string) error
 	GetInfo(id string) (TorrentInfo, error)
 	GetFiles(id string) ([]FileInfo, error)
-	Delete(id string) error
+	Delete(id string, deleteFiles bool) error
 }
 
 type client struct {
@@ -242,6 +242,19 @@ type TorrentInfo struct {
 	Upspeed           int           `json:"upspeed"`            // 上传速度（字节/秒）
 }
 
+type InfoNotFoundError struct {
+	Id  string
+	Err error
+}
+
+func (i InfoNotFoundError) Error() string {
+	return "there should be exactly one task with tag \"alist-" + i.Id + "\""
+}
+
+func NewInfoNotFoundError(id string) InfoNotFoundError {
+	return InfoNotFoundError{Id: id}
+}
+
 func (c *client) GetInfo(id string) (TorrentInfo, error) {
 	var infos []TorrentInfo
 
@@ -266,7 +279,7 @@ func (c *client) GetInfo(id string) (TorrentInfo, error) {
 		return TorrentInfo{}, err
 	}
 	if len(infos) != 1 {
-		return TorrentInfo{}, errors.New("there should be exactly one task with tag \"alist-" + id + "\"")
+		return TorrentInfo{}, NewInfoNotFoundError(id)
 	}
 	return infos[0], nil
 }
@@ -313,7 +326,7 @@ func (c *client) GetFiles(id string) ([]FileInfo, error) {
 	return infos, nil
 }
 
-func (c *client) Delete(id string) error {
+func (c *client) Delete(id string, deleteFiles bool) error {
 	err := c.checkAuthorization()
 	if err != nil {
 		return err
@@ -325,13 +338,27 @@ func (c *client) Delete(id string) error {
 	}
 	v := url.Values{}
 	v.Set("hashes", info.Hash)
-	v.Set("deleteFiles", "false")
+	if deleteFiles {
+		v.Set("deleteFiles", "true")
+	} else {
+		v.Set("deleteFiles", "false")
+	}
 	response, err := c.post("/api/v2/torrents/delete", v)
 	if err != nil {
 		return err
 	}
 	if response.StatusCode != 200 {
-		return errors.New("failed")
+		return errors.New("failed to delete qbittorrent task")
+	}
+
+	v = url.Values{}
+	v.Set("tags", "alist-"+id)
+	response, err = c.post("/api/v2/torrents/deleteTags", v)
+	if err != nil {
+		return err
+	}
+	if response.StatusCode != 200 {
+		return errors.New("failed to delete qbittorrent tag")
 	}
 	return nil
 }
